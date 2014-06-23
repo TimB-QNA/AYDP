@@ -1,0 +1,6 @@
+This is an upgrade to Maplin's wind direction sensor. The original sensor
+consists of a PCB with eight reed switches and a pass-through for the
+wind speed sensor. The new sensor hardware improves on this by using eight
+hall-effect sensors and a 12-bit ADC on board. The pass-through for the
+wind sensor is maintained. The updated sensor is not compatible with the
+rest of the maplin kit; it requires the arduino base unit to function correctly.
