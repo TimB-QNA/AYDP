@@ -37,7 +37,7 @@ $Descr A4 11693 8268
 encoding utf-8
 Sheet 1 1
 Title ""
-Date "22 jun 2014"
+Date "30 jun 2014"
 Rev ""
 Comp ""
 Comment1 ""
@@ -696,4 +696,6 @@ Wire Wire Line
 Wire Wire Line
 	7450 1300 7450 1450
 Connection ~ 7450 1450
+Text Notes 3900 2200 0    60   ~ 0
+Hall effect sensors are\nA1301KLHLT-T\nFarnell 1791387
 $EndSCHEMATC
