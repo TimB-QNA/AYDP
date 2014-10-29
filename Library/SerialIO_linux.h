@@ -12,7 +12,8 @@ Changelog:
 
 #ifndef SerialIO_H
   #define SerialIO_H
-#include <QtGui>
+#include <QtCore>
+#include <QtXml>
 #include <QtDesigner/QDesignerExportWidget>
 
 #include <termios.h>
@@ -21,23 +22,15 @@ Changelog:
 using namespace std;
 
 
-class QDESIGNER_WIDGET_EXPORT SerialIO : public QWidget
+class SerialIO : public QObject
 {
    Q_OBJECT
-   Q_PROPERTY(QString Device READ device WRITE setDevice)
-   Q_PROPERTY(int Baud_Rate READ baud WRITE setBaud)
-   Q_PROPERTY(int Data_Bits READ dataBits WRITE setDataBits)
-   Q_PROPERTY(bool Parity_En READ parityEn WRITE setParityEn)
-   Q_PROPERTY(bool Parity_Odd READ parityOdd WRITE setParityOdd)
-   Q_PROPERTY(int Stop_Bits READ stopBits WRITE setStopBits)
-   Q_PROPERTY(bool XON_In READ XIN WRITE setXIN)
-   Q_PROPERTY(bool XON_Out READ XOUT WRITE setXOUT)
-   Q_PROPERTY(bool Use_RTS READ RTS WRITE setRTS)
 
 public:
   int bufferSizeLimit;
-  vector<unsigned char> buffer;
-  SerialIO(QWidget *parent=0, bool design=false);
+  QByteArray buffer;
+  SerialIO(QObject *parent=0);
+  void readSettings(QDomNode root);
 
 public slots:
    int open();
@@ -76,11 +69,9 @@ private:
   int fd;
   int baudrate, DParity, DDatabits, DStopbits;
   bool Read, Write, softhandshake;
-  bool isDesign;
   QString dev;
   QPointF loc;
   QSocketNotifier *notifier;
-  void paintEvent(QPaintEvent *event);
   QSettings portSet;
 };
 

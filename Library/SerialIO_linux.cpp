@@ -11,7 +11,7 @@ Changelog:
 */
 
 
-#include <QtGui>
+#include <QtCore>
 #include <QLatin1String>
 #include <qdom.h>
 #include <QFile>
@@ -23,12 +23,10 @@ Changelog:
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-SerialIO::SerialIO(QWidget *parent, bool design)
-           : QWidget(parent)
+SerialIO::SerialIO(QObject *parent) : QObject(parent)
 {
   int i;
   printf("Initialising OpenPilot::SerialIO\n");
-  isDesign=design;
   fd=-1;
   bufferSizeLimit=4*1024;  // 4kBytes
   
@@ -145,30 +143,17 @@ Canonical   Non-canonical
 */
 }
 
-void SerialIO::paintEvent(QPaintEvent *event){
-  // Just draw something so we can see the widget!!
-  char line[4096];
-  QPointF target(0.0, 0.0);
-  if (!isDesign) return;
-
-  QPainter painter(this);
-  sprintf(line,"Serial IO"); painter.drawText(5,15,line);
-  sprintf(line,"Device: %s",device().toAscii().data()); painter.drawText(5,30,line);
-  sprintf(line,"Data Bits: %i",dataBits()); painter.drawText(5,45,line);
-  if (parityEn()){
-    if (parityOdd()) sprintf(line,"Parity: Odd"); painter.drawText(5,60,line);
-    if (!parityOdd()) sprintf(line,"Parity: Even"); painter.drawText(5,60,line);
-  }else{ sprintf(line,"Parity: None"); painter.drawText(5,60,line); }
-  sprintf(line,"Stop Bits: %i",stopBits()); painter.drawText(5,75,line);
-  sprintf(line,"Flow Control: ");
-  if (XIN()) sprintf(line,"%s Inward",line);
-  if (XOUT()) sprintf(line,"%s Outward",line);
-  if (!XIN() && !XOUT()) sprintf(line,"%s None",line);
-  painter.drawText(5,90,line);
-  sprintf(line,"BAUD Rate: %i",baud()); painter.drawText(5,105,line);
-  painter.drawRect(0,0,width()-1,height()-1);
+void SerialIO::readSettings(QDomNode root){
+  QDomNode node;
+  QDomElement element;
+  
+  node = root.firstChild();
+  while (!node.isNull()){
+    element=node.toElement();
+    if (element.tagName().toLower()=="device") setDevice(element.text());
+    node=node.nextSibling();
+  }
 }
-
 
 int SerialIO::open(){
   printf("SerialIO::open() - %s - Unix Implementation\n", dev.toAscii().data());
@@ -315,34 +300,19 @@ void SerialIO::getData(int nfd){
   if (fd!=nfd) return;
   bytesRead=::read(fd, byteData, inBuffSize);
   
-//  printf("SerialIO:: New data == ");
   for (i=0;i<bytesRead;i++){
-    buffer.push_back(byteData[i]);
+    buffer.append(byteData[i]);
   }
-//  printf("\n");  
-  
-//  printf("SerialIO:: Buffer   == ");
-//  for (i=0;i<buffer.size();i++){
-//    printf("%02X(%03i) ",buffer[i],buffer[i]);
-//  }
-//  printf("\n");
-
+/*
   if (buffer.size()>bufferSizeLimit){
     buffer.erase(buffer.begin(), buffer.end()-bufferSizeLimit);
   }
-  /*
-  for (i=0;i<strlen(buff) && i<4096 ;i++){
-    if (buff[i]=='\r' || buff[i]=='\n'){
-      struct timeval new_time;
-      gettimeofday(&new_time, 0);
-      emit logData( time(NULL), (int)new_time.tv_usec, aggregate );
-      emit rawString(aggregate);
-      aggregate="";
-    }else{
-      aggregate+=buff[i];
-    }
-  }
   */
+  Sentence=QString(buffer);
+  list1=Sentence.split("$");
+  for (i=0;i<list1.count();i++) emit rawString(list1[i]);
+  buffer.clear();
+  buffer.append(list1[list1.count()-1]);
   emit newData();
 }
 
@@ -375,7 +345,6 @@ void SerialIO::setBaud(int brt){
   }
 
   portSet.setValue("/serialio/baud",baudArr[idx]);
-  update();
 }
 
 int SerialIO::baud(){
@@ -386,7 +355,6 @@ void SerialIO::setDataBits(int db){
   if (db<5) db=5;
   if (db>8) db=8;
   portSet.setValue("/serialio/databits",db);
-  update();
 }
 
 int SerialIO::dataBits(){
@@ -395,7 +363,6 @@ int SerialIO::dataBits(){
 
 void SerialIO::setParityEn(bool par){
   portSet.setValue("/serialio/EnableParity",par);
-  update();
 }
 
 bool SerialIO::parityEn(){
@@ -404,7 +371,6 @@ bool SerialIO::parityEn(){
 
 void SerialIO::setParityOdd(bool par){
   portSet.setValue("/serialio/OddParity",par);
-  update();
 }
 
 bool SerialIO::parityOdd(){
@@ -415,7 +381,6 @@ void SerialIO::setStopBits(int stop){
   if (stop<1) stop=1;
   if (stop>2) stop=2;
   portSet.setValue("/serialio/stopbits",stop);
-  update();
 }
 
 int SerialIO::stopBits(){
@@ -424,7 +389,6 @@ int SerialIO::stopBits(){
 
 void SerialIO::setXIN(bool xin){
   portSet.setValue("/serialio/xin",xin);
-  update();
 }
 
 bool SerialIO::XIN(){
@@ -433,7 +397,6 @@ bool SerialIO::XIN(){
 
 void SerialIO::setXOUT(bool xout){
   portSet.setValue("/serialio/xout",xout);
-  update();
 }
 
 bool SerialIO::XOUT(){
@@ -442,7 +405,6 @@ bool SerialIO::XOUT(){
 
 void SerialIO::setRTS(bool rts){
   portSet.setValue("/serialio/rts",rts);
-  update();
 }
 
 bool SerialIO::RTS(){

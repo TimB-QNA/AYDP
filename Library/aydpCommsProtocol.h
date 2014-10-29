@@ -1,11 +1,16 @@
 #ifndef AYDPCOMMSPROTOCOL_H
 #define AYDPCOMMSPROTOCOL_H
-
 #ifndef x86
   #define arduino
 #endif
 
-#include "aydpTime.h"
+#include "typedef.h"
+
+#ifndef arduino
+  #include <QVector>
+  #include <QString>
+#endif
+
 
 typedef struct{
     unsigned char start;
@@ -17,39 +22,52 @@ typedef struct{
     unsigned int length;
 #endif
     // Time Info in header
-#ifdef arduino
-    long int year;
-    unsigned long int day;
-#endif
-#ifdef x86
-    int year;
-    unsigned int day;
-#endif
-    unsigned char hour;
-    unsigned char min;
-    unsigned char sec;
-#ifdef arduino
-    unsigned long int micro;
-#endif
-#ifdef x86
-    unsigned int micro;
-#endif
+    struct timeval tv;
 } __attribute__((packed)) aydpCommsProtoHeader;
+
+class registeredBoolean {
+  public:
+    QString name;
+    bool *data;
+};
+
+class registeredInteger {
+  public:
+    QString name;
+    int *data;
+};
+
+class registeredFloat {
+  public:
+    QString name;
+    float *data;
+};
 
 class aydpCommsProtocol {
   public:
+    int messLength;
     aydpCommsProtoHeader header;
-    unsigned char *data;
-    unsigned char checksum;
+    unsigned char *message;
+    QVector<registeredBoolean> regBool;
+    QVector<registeredInteger>  regInt;
+    QVector<registeredFloat>   regFloat;
     
     aydpCommsProtocol();
-    void createWindMessage(aydpTime sysTime, float windSpeed, float windDirection);
-    int  parseWindMessage(unsigned char *msg, unsigned int nbytes, aydpTime *sysTime, float *windSpeed, float *windDirection);
+    void useSocket(QTcpSocket skt);
     
-  private:  
-    void setupHeaderFooter(aydpTime sysTime);
+    void registerBoolean(QString name, bool *source, bool isRemote=false, int id=-1);
+    void registerInteger(QString name, int *source, bool isRemote=false, int id=-1);
+    void registerFloat(QString name, float *source, bool isRemote=false, int id=-1);
+    void listRegisteredVariables();
     
+    void createFloatMessage(struct timeval sysTime, int type, int nData, float *inData);
+//    int  parseWindMessage(unsigned char *msg, unsigned int nbytes, aydpTime *sysTime, float *windSpeed, float *windDirection);
     
+  private:
+    void createChecksum();
+    void checkEndianness();
+    bool isLittleEndian;
+    QTCPSocket *interface;
 };
 
 #endif

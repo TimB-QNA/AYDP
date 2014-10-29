@@ -3,31 +3,167 @@
 #include <string.h>
 
 aydpCommsProtocol::aydpCommsProtocol(){
-  data = new unsigned char[1];
+  messLength=0;
+  checkEndianness();
 }
 
-void aydpCommsProtocol::createWindMessage(aydpTime sysTime, float windSpeed, float windDirection){
-  header.type=1;
-  header.length=2*sizeof(float);
-  delete data;
-  data = new unsigned char[header.length];
-  memcpy(&data[0],&windSpeed, 4);
-  memcpy(&data[4],&windDirection, 4);
-  setupHeaderFooter(sysTime);
+void aydpCommsProtocol::useSocket(QTcpSocket *skt){
+  interface=skt;  
 }
 
-void aydpCommsProtocol::setupHeaderFooter(aydpTime sysTime){
-  header.start=0xFF;
-  header.year =sysTime.year;
-  header.day  =sysTime.day;
-  header.hour =sysTime.hour;
-  header.min  =sysTime.min;
-  header.sec  =sysTime.sec;
-  header.micro=sysTime.micro;
+void aydpCommsProtocol::checkEndianness(){
+  unsigned int ce=1;
+  unsigned char et;
+  memcpy(&et, &ce, 1); // copy the first byte to et.
+  isLittleEndian=true;
+  if (et==0) isLittleEndian=false;
+}
+
+void aydpCommsProtocol::registerBoolean(QString name, bool *source, bool isRemote, int id){
+  int i;
+  // If id<0 then append to the end of the array...
+  if (id<0){
+    id=regBool.size();
+  }
   
-  checksum=0x00;
+  if (id>regBool.size()-1){
+    regBool.resize(id+1);
+    // Having resized, set any null pointers to real objects
+    // This is horribly unclean, but not creating objects would be worse...
+    for (i=0;i<regBool.size()-1;i++){
+      if (regBool[id].data==NULL) regBool[id].data = new bool;
+    }
+  }
+
+  regBool[id].name=name;
+  if (isRemote)  regBool[id].data = new bool;
+  if (!isRemote) regBool[id].data=source;
+  
+  
+//  if (!isRemote) sendRegisterBoolMessage(id, regBool[id]);
 }
 
+void aydpCommsProtocol::registerInteger(QString name, int *source, bool isRemote, int id){
+  int i;
+  // If id<0 then append to the end of the array...
+  if (id<0){
+    id=regInt.size();
+  }
+  
+  if (id>regInt.size()-1){
+    regInt.resize(id+1);
+    // Having resized, set any null pointers to real objects
+    // This is horribly unclean, but not creating objects would be worse...
+    for (i=0;i<regInt.size()-1;i++){
+      if (regInt[id].data==NULL) regInt[id].data = new int;
+    }
+  }
+
+  regInt[id].name=name;
+  if (isRemote)  regInt[id].data = new int;
+  if (!isRemote) regInt[id].data=source;
+  
+//  if (!isRemote) sendRegisterIntegerMessage(id, regFloat[id]);  
+}
+
+void aydpCommsProtocol::registerFloat(QString name, float *source, bool isRemote, int id){
+  int i;
+  // If id<0 then append to the end of the array...
+  if (id<0){
+    id=regFloat.size();
+  }
+  
+  if (id>regFloat.size()-1){
+    regFloat.resize(id+1);
+    // Having resized, set any null pointers to real objects
+    // This is horribly unclean, but not creating objects would be worse...
+    for (i=0;i<regFloat.size()-1;i++){
+      if (regFloat[id].data==NULL) regFloat[id].data = new float;
+    }
+  }
+
+  regFloat[id].name=name;
+  if (isRemote)  regFloat[id].data = new float;
+  if (!isRemote) regFloat[id].data=source;
+  
+//  if (!isRemote) sendRegisterFloatMessage(id, regFloat[id]);  
+}
+    
+void aydpCommsProtocol::listRegisteredVariables(){
+  int i;
+  printf("Registered boolean variables:\n");
+  for (i=0;i<regBool.size();i++){
+    printf("  Index: %i\n", i);
+    printf("   Name: %s\n", regBool[i].name.toAscii().data());
+    printf("  Value: ");
+    if (*regBool[i].data) printf("T\n");
+    if (!*regBool[i].data) printf("F\n");
+    printf("\n");
+  }
+  
+  printf("Registered integer variables:\n");
+  for (i=0;i<regInt.size();i++){
+    printf("  Index: %i\n", i);
+    printf("   Name: %s\n", regInt[i].name.toAscii().data());
+    printf("  Value: %i\n", *regInt[i].data);
+    printf("\n");
+  }
+  
+  printf("Registered floating point variables:\n");
+  for (i=0;i<regFloat.size();i++){
+    printf("  Index: %i\n", i);
+    printf("   Name: %s\n", regFloat[i].name.toAscii().data());
+    printf("  Value: %f\n", *regFloat[i].data);
+    printf("\n");
+  }
+}
+  
+void aydpCommsProtocol::createFloatMessage(struct timeval sysTime, int type, int nData, float *inData){
+  int i, size=sizeof(float);
+//  aydpCommsProtoHeader header;
+  
+  header.start=0xFF;  
+  header.type=type;
+  header.length=nData*size;
+  header.tv=sysTime;
+
+  if (messLength!=0) delete message;
+  messLength=sizeof(header)+header.length+1;
+  message = new unsigned char [messLength];  
+  memcpy(message, &header, sizeof(header));
+ 
+  for (i=0;i<nData;i++) memcpy(&message[sizeof(header)+i], &inData[i*size], size);
+  
+  createChecksum();
+}
+
+void aydpCommsProtocol::createChecksum(){
+  int i;
+  unsigned char checksum;
+  checksum=message[0];
+  for (i=1;i<messLength-1;i++) checksum^=message[i];
+  message[messLength-1]=checksum;
+}
+
+QByteArray aydpCommsProtocol::createDataStoreMsg(dataStore *ds){
+  struct timeval sysTime;
+  
+  gettimeofday(&sysTime, NULL);
+  
+  header.start=0xFF;  
+  header.type=17;
+  header.length=sizeof(*ds);
+  header.tv=sysTime;
+
+  if (messLength!=0) delete message;
+  messLength=sizeof(header)+header.length+1;
+  message = new unsigned char [messLength];  
+  memcpy(message, &header, sizeof(header));
+  memcpy(&message[sizeof(header)], ds, sizeof(*ds));
+  createChecksum();
+  
+  return QByteArray((char*)message, messLength);
+}
 
 /*!
  * Return states have the following meanings:
@@ -36,6 +172,7 @@ void aydpCommsProtocol::setupHeaderFooter(aydpTime sysTime){
  * -2 - Start byte incorrect
  * -3 - Type incorrect 
  */
+/*
 int aydpCommsProtocol::parseWindMessage(unsigned char *msg, unsigned int nbytes, aydpTime *sysTime, float *windSpeed, float *windDirection){ 
   int i;
   if (nbytes<sizeof(header)) return -1;
@@ -52,7 +189,7 @@ int aydpCommsProtocol::parseWindMessage(unsigned char *msg, unsigned int nbytes,
   memcpy(data,msg+sizeof(header),header.length);
   
   checksum=msg[sizeof(header)+header.length];
-/*  
+  
   printf("Start    = 0x%02x\n",header.start);
   printf("Type     = %i\n",header.type);
   printf("Length   = %i\n",header.length);
@@ -68,7 +205,7 @@ int aydpCommsProtocol::parseWindMessage(unsigned char *msg, unsigned int nbytes,
   }
   printf("\n");
   printf("Checksum = 0x%02x\n",checksum);
-*/  
+  
   // Extract time data...
   sysTime->year = header.year;
   sysTime->day  = header.day;
@@ -83,3 +220,4 @@ int aydpCommsProtocol::parseWindMessage(unsigned char *msg, unsigned int nbytes,
   
   return sizeof(header)+header.length+1;
 }
+*/
