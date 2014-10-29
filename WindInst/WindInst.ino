@@ -1,9 +1,10 @@
-#include "aydpTime.h"
+#include "typedef.h"
 #include "aydpCommsProtocol.h"
 #include <SoftwareSerial.h>
 
 SoftwareSerial bluetooth(5,6); // Rx pin D5 Tx pin D6
-aydpTime localTime;
+timeval localTime;
+unsigned long int lastMicros;
 aydpCommsProtocol comms;
 volatile unsigned long int pSpdPulseTime;
 volatile unsigned long int spdPulseDelta;
@@ -31,21 +32,23 @@ void setup(){
   // voltage.
   pinMode(A0, INPUT);
   pinMode(A5, INPUT);
-  localTime.resetArduinoTime(micros());
-/*  
+  localTime.tv_sec=0;
+  localTime.tv_usec=0;
+  lastMicros=micros();
+
   Serial.println("Data Sizes (bytes):");
-  Serial.print("unsigned char");
+  Serial.print("unsigned char ");
   Serial.println(sizeof(unsigned char));
-  Serial.print("unsigned int");
+  Serial.print("unsigned int ");
   Serial.println(sizeof(unsigned int));
-  Serial.print("int");
+  Serial.print("int ");
   Serial.println(sizeof(int));
-  Serial.print("unsigned long int");
+  Serial.print("unsigned long int ");
   Serial.println(sizeof(unsigned long int));
-  Serial.print("float");
+  Serial.print("long long int ");
+  Serial.println(sizeof(long long int));
+  Serial.print("float ");
   Serial.println(sizeof(float));
-*/
-  
 }
 
 void loop(){
@@ -53,68 +56,63 @@ void loop(){
   uint8_t message[256];
   // Set a maximum timeout on pulse length so the reading drops back to 0 properly.
   // Get correct time
-  localTime.incrementByMicros(micros());
-/*
-  Serial.print("Time: ");
-  Serial.print(localTime.year);
-  Serial.print(".");
-  Serial.print(localTime.day);
-  Serial.print(".");
-  Serial.print(localTime.hour);
-  Serial.print(".");
-  Serial.print(localTime.min);
-  Serial.print(".");
-  Serial.print(localTime.sec);
-  Serial.print("-");
-  Serial.println(localTime.micro);
-*/
-//  Serial.println(digitalRead(2));
-//  Serial.print("spdPulseDelta ");
-//  Serial.print(spdPulseDelta);
-//  Serial.println(" uS");
+  incrementByMicros(micros());
+  Serial.print("Time = ");
+  Serial.print(localTime.tv_sec+localTime.tv_usec/10e6);
+
   calcSpeed=1.0e6/(float)spdPulseDelta * 1.492; // 1.492 MPH/Hz
   if (calcSpeed>0.01 && calcSpeed<100) windSpeed=calcSpeed;
   if (pSpdPulseTime<micros()-5e6) windSpeed=0;
   
   calcDir=calcDirection();
   if (calcDir>-.001) windDir=calcDir;
-/*
-  Serial.print("Wind Speed ");
+
+  Serial.print("   Wind Speed = ");
   Serial.print(windSpeed);
-  Serial.print(" MPH      Direction: ");
+  Serial.print(" MPH   ");
+  Serial.print("Direction = ");
   Serial.print(windDir);
   Serial.println(" deg");
-*/
-  comms.createWindMessage(localTime, windSpeed, windDir);
-  // Copy comms packet into suitable memory space for Arduino to transmit...
-  memcpy(message,&comms.header, sizeof(comms.header));
-  bluetooth.write(message, sizeof(comms.header));
+
+  comms.createFloatMessage(localTime, 1, 1, &windSpeed); bluetooth.write(comms.message, comms.messLength);
+  comms.createFloatMessage(localTime, 2, 1, &windDir);   bluetooth.write(comms.message, comms.messLength);
+
 /*
   Serial.print("Message length ");
-  Serial.print(sizeof(comms.header)+comms.header.length+sizeof(comms.checksum));
+  Serial.print(comms.messLength);
   Serial.println(" bytes");
-  int i;
-  for (i=0;i<sizeof(comms.header);i++){
-    Serial.print(message[i]);
+ int i;
+ 
+  Serial.print("Header (");
+  Serial.print(sizeof(comms.header));
+  Serial.println(" Bytes)");  
+  Serial.println(comms.header.start);
+  Serial.println(comms.header.type);
+  Serial.println(comms.header.length);
+  Serial.println((int)comms.header.tv.tv_sec);
+  Serial.println((unsigned int)comms.header.tv.tv_usec);
+ 
+ 
+  unsigned char *head;
+  head = new unsigned char[22];
+  memcpy(head, &comms.header, 22);
+  for (i=0;i<22;i++){
+    Serial.print(head[i]);
     Serial.print(" ");
   }
-  Serial.print("- ");
-*/
-  memcpy(message, comms.data, comms.header.length);
-  bluetooth.write(message, comms.header.length);
-  bluetooth.write(comms.checksum);
-/*
-  for (i=0;i<comms.header.length;i++){
-    Serial.print(message[i]);
+  Serial.println("");
+  delete head;
+
+  for (i=0;i<comms.messLength;i++){
+    Serial.print(comms.message[i]);
     Serial.print(" ");
-  } 
-*/  
-//  Serial.println("");
-//  Serial.print("A5 = ");
-//  Serial.println(analogRead(A5));
-  if (bluetooth.available())  Serial.write(bluetooth.read());
-  if (Serial.available())  bluetooth.write(Serial.read());
-  delay(20);
+  }
+  Serial.println("");
+  */
+  
+//  if (bluetooth.available())  Serial.write(bluetooth.read());
+//  if (Serial.available())  bluetooth.write(Serial.read());
+  delay(1000);
 }
 
 float rangeCentre[16];
@@ -191,5 +189,23 @@ void speedPulseRising(){
   if (delta>200){
     spdPulseDelta=delta;
     pSpdPulseTime=cSpdPulseTime;
+  }
+}
+
+void incrementByMicros(unsigned long currentMicros){
+  unsigned long int deltaMicros=0;
+  
+  if (currentMicros != lastMicros) {
+    // we have ticked over
+    // calculate how many micros have gone past
+    deltaMicros = currentMicros-lastMicros; // note this works even if micros() has rolled over back to 0
+    lastMicros = currentMicros;
+  }
+  
+  localTime.tv_usec+=deltaMicros;
+  
+  while(localTime.tv_usec>=1e6){
+    localTime.tv_usec-=1e6;
+    localTime.tv_sec++;
   }
 }
