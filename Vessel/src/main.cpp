@@ -9,34 +9,23 @@
 #include "commsLink.h"
 
 int main(int argc, char * argv[]){
-/*
- * For testing Comms Link on PC only.
-
-  dataStore vesselData;
-  commsLink *cLink;
-  
-  QCoreApplication app(argc,argv);
-  cLink= new commsLink(0, &vesselData);
-  cLink->startServer();
-*/  
   int i;
   dataStore vesselData;
-//  aydpCommsProtocol commsProto;
+  commsLink *cLink;
   QList<dataCollector*> input;
   QCoreApplication app(argc,argv);
+
+  cLink= new commsLink(0, &vesselData);
+  cLink->startServer();
+
   logOutput *log = new logOutput();
   maestro *output = new maestro();
-  
-//  commsProto.registerFloat("Roll Angle", &vesselData.roll);  
-//  commsProto.registerFloat("Pitch Angle", &vesselData.pitch);  
-//  commsProto.registerFloat("Heading", &vesselData.heading);  
   
   log->setFileName("AYDP_LogFile.csv");
   vesselData.setupLogOutput(log);
         
   input.append(new imuReader(0, &vesselData));
   input.append(new NMEA(0, &vesselData));
-  // Test Servo output
   
   output->grabDevice("00009132");
   output->channel[0].coefficient.append(1500);
@@ -46,22 +35,16 @@ int main(int argc, char * argv[]){
   output->channel[0].upperBound=30;
   log->flt.append(&output->channel[0].input); log->fltHeader.append("Rudder Demand");
   
-  output->channel[2].coefficient.append(0);
-  output->channel[2].coefficient.append(1);
+  output->channel[2].coefficient.append(1000);
+  output->channel[2].coefficient.append(1000/250.);
   log->flt.append(&output->channel[2].input); log->fltHeader.append("MainSail Demand");
     
   output->channel[3].coefficient.append(1000);
   output->channel[3].coefficient.append(1000/250.);
   log->flt.append(&output->channel[3].input); log->fltHeader.append("Jib Demand");
   
-  // Register the output channels with comms...
-//  commsProto.registerFloat("Rudder Demand", &output->channel[0].input);  
-//  commsProto.registerFloat("MainSail Demand", &output->channel[2].input);  
-//  commsProto.registerFloat("Jib Demand", &output->channel[3].input);  
-//  commsProto.listRegisteredVariables();
-  
   output->orderPosition(0, 0.);
-  output->orderPosition(2, 4000.);
+  output->orderPosition(2, 0.);
   output->orderPosition(3, 0.);
   
   // Create PID heading autopilot
@@ -104,7 +87,7 @@ int main(int argc, char * argv[]){
 
   root=doc.documentElement();
   if (root.tagName().toLower() != "aydp"){
-    printf("This is not aa AYDP configuration file\n");
+    printf("This is not an AYDP configuration file\n");
     return 1;
   }
 
@@ -115,9 +98,14 @@ int main(int argc, char * argv[]){
     node=node.nextSibling();
   }
   
+  printf("Starting log system\n");
   log->start();
   // Start input threads
-  for (i=0;i<input.count();i++) input[i]->start();
+  for (i=0;i<input.count();i++){
+    printf("Starting %s\n",input[i]->objectName());
+    input[i]->start();
+  }
+  printf("Starting heading autopilot\n");
   headAP->start();
   return app.exec();
 }
