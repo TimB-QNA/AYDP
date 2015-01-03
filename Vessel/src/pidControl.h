@@ -20,6 +20,7 @@ class pidControl : public QThread
     void setSignal(float *v);
     void setDerivative(float *der);
     void setIntegralLimit(float iLim);
+    double control();
     
   public slots:
     void setTarget(float t);

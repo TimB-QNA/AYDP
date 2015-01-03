@@ -14,7 +14,7 @@ int main(int argc, char * argv[]){
   commsLink *cLink;
   QList<dataCollector*> input;
   QCoreApplication app(argc,argv);
-
+//  vesselData.roll=150;
   cLink= new commsLink(0, &vesselData);
   cLink->startServer();
 
@@ -59,7 +59,7 @@ int main(int argc, char * argv[]){
   headAP->setSignal(&vesselData.heading);
   headAP->setDerivative(&vesselData.headingRate);
   headAP->setIntegralLimit(10);
-  headAP->setTarget(0);
+  headAP->setTarget(31);
   headAP->setupLogOutput(apLog);
   
   QObject::connect(headAP, SIGNAL(control(int,float)), output, SLOT(orderPosition(int,float)));
@@ -102,10 +102,11 @@ int main(int argc, char * argv[]){
   log->start();
   // Start input threads
   for (i=0;i<input.count();i++){
-    printf("Starting %s\n",input[i]->objectName());
+    printf("Starting %s\n",input[i]->objectName().toAscii().data());
     input[i]->start();
   }
   printf("Starting heading autopilot\n");
   headAP->start();
+
   return app.exec();
 }

@@ -16,21 +16,27 @@ void imuReader::readSettings(QDomNode root){
   node = root.firstChild();
   while (!node.isNull()){
     element=node.toElement();
-    if (element.tagName().toLower()=="settings") settings = new RTIMUSettings(element.text().toAscii().data());
+    if (element.tagName().toLower()=="spoof") spoof=element.text().toLower().contains("true");
+    if (element.tagName().toLower()=="settings") settingsFile=element.text();
     node=node.nextSibling();
   }
 }
 
 void imuReader::run(){
-  printf("Creating IMU interface\n");
-  imu = RTIMU::createIMU(settings);
+  int pollRate=100;
   
-  printf("Initialising IMU\n");
-  imu->IMUInit();
-  
+  if (!spoof){
+    printf("Reading IMU settings\n");
+    settings = new RTIMUSettings(settingsFile.toAscii().data());
+    printf("Creating IMU interface\n");
+    imu = RTIMU::createIMU(settings);
+    printf("Initialising IMU\n");
+    imu->IMUInit();
+    pollRate=imu->IMUGetPollInterval();
+  }
 //  printf("Creating poll timer at %i ms\n",imu->IMUGetPollInterval());
   hwPollTimer = new QTimer();
-  hwPollTimer->setInterval(imu->IMUGetPollInterval());
+  hwPollTimer->setInterval(pollRate);
   connect(hwPollTimer, SIGNAL(timeout()), this, SLOT(readIMU()));
   sampleTime=QDateTime::currentDateTimeUtc();
   hwPollTimer->start();
@@ -44,15 +50,19 @@ void imuReader::readIMU(){
   float deltaT;
   QDateTime newTime;
   RTIMU_DATA imuData;
-  
-  while (imu->IMURead()) {
-    imuData = imu->getIMUData();
+  if (spoof){
+    newRoll=0.;
+    newPitch=0.;
+    newHeading=0.;
+  }else{
+    while (imu->IMURead()) {
+      imuData = imu->getIMUData();
 //    printf("Reading\n");
+    }
+    newRoll=imuData.fusionPose.x()*r2d;
+    newPitch=imuData.fusionPose.y()*r2d;
+    newHeading=imuData.fusionPose.z()*r2d;
   }
-  
-  newRoll=imuData.fusionPose.x()*r2d;
-  newPitch=imuData.fusionPose.y()*r2d;
-  newHeading=imuData.fusionPose.z()*r2d;
   
   if (fabs(newRoll)>1e-6 && fabs(newPitch)>1e-6 && fabs(newHeading)>1e-6){
     newTime=QDateTime::currentDateTimeUtc();       // Calculate time step. Later versions of

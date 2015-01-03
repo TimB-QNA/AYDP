@@ -50,8 +50,8 @@ void dataStore::print(){
   printf("         Pitch Rate: %.3lf\n",pitchRate);
   printf("       Heading Rate: %.3lf\n",headingRate);
   printf("  GPS:\n");
-  printf("           Latitude: %.3lf\n",latitude);
-  printf("          Longitude: %.3lf\n",longitude);
+  printf("           Latitude: %.6lf\n",latitude);
+  printf("          Longitude: %.6lf\n",longitude);
   printf("              Track: %.3lf\n",track);
   printf("  Speed Over Ground: %.3lf\n",speedOverGround);
   printf("           Fix Type: %i\n",fixType);
@@ -90,8 +90,11 @@ QByteArray dataStore::toByteArray(){
 }
 
 dataStore dataStore::fromByteArray(QByteArray input){
+  int i;
   size_t size, sAcc;
   dataStore dStore;
+  
+//  printf("Roll: "); for (i=0;i<size;i++) printf("0x%02x ", (unsigned char)input.data()[i+sAcc]); printf("\n"); 
   
   sAcc=0;
   size=sizeof(float);  memcpy(&dStore.roll,            input.data()+sAcc, size); sAcc+=size;

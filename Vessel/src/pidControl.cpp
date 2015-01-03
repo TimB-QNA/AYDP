@@ -105,3 +105,7 @@ void pidControl::controlFunction(){
   emit control(channel, controlValue);
   log->writeLogLine();
 }
+
+double control(){
+  return controlValue;
+}

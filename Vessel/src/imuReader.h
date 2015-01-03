@@ -15,8 +15,10 @@ class imuReader : public dataCollector
     void run();
     
   private:
+    bool spoof;
     QDateTime sampleTime;
     QTimer *hwPollTimer;
+    QString settingsFile;
     RTIMUSettings *settings;
     RTIMU *imu;
     

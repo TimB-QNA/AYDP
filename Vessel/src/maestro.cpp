@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 maestro::maestro(QObject *parent) : QObject(parent){
+  channel.clear(); channel.resize(24); // initialise channels to maximum number.
   printf("OpenPilot::Servo - Initialising\n");
   if (libusb_init(&ctx)<0){
     printf("OpenPilot::Servo - Failed to initialise USB. Cannot Continue\n");
@@ -115,7 +116,7 @@ void maestro::connectDevice(){
     return;
   }
   printf("OpenPilot::Servo - Device has %i channels\n", nChans);
-  channel.clear(); channel.resize(6); // initialise calibration data.
+  channel.clear(); channel.resize(nChans); // initialise calibration data.
   
   if (libusb_open(uAct,&devHandle)==0){
     //  controlTransfer(0x80, 6, 0x0100, 0x0000, buffer);

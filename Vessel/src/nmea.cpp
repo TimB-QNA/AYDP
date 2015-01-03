@@ -151,7 +151,7 @@ void NMEA::parseData(QString input){
     vesselData->mdop=sentence.at(15).toDouble();
     vesselData->hdop=sentence.at(16).toDouble();
     vesselData->vdop=DOP.toDouble();
-    printf("Sats -- %i %i %lf %lf %lf\n",vesselData->fixType, vesselData->actSats, vesselData->mdop, vesselData->hdop, vesselData->vdop);
+//    printf("Sats -- %i %i %lf %lf %lf\n",vesselData->fixType, vesselData->actSats, vesselData->mdop, vesselData->hdop, vesselData->vdop);
     handled=true;
   }
 
@@ -210,7 +210,7 @@ void NMEA::parseData(QString input){
     vesselData->longitude=lon;
     vesselData->track=trk;
     vesselData->speedOverGround=spd;
-    printf("GPS -- %lf %lf %lf %lf\n",vesselData->latitude, vesselData->longitude, vesselData->track, vesselData->speedOverGround);
+//    printf("GPS -- %lf %lf %lf %lf\n",vesselData->latitude, vesselData->longitude, vesselData->track, vesselData->speedOverGround);
     handled=true;
   }
 

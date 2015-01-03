@@ -5,6 +5,7 @@
     </interface>
   </nmeaReader>
   <imuReader>
+    <spoof>true</spoof>
     <settings>RTIMULib</settings>
   </imuReader>
   <headingAP>
