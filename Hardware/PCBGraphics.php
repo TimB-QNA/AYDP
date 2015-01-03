@@ -26,7 +26,7 @@ foreach ($points as $pt){
   $ptData=split(" ",$pt);
   if (count($ptData)>=2){
     $tmpDat= new point();
-    print_r($ptData);
+//    print_r($ptData);
     $tmpDat->x=$ptData[0];
     $tmpDat->y=$ptData[1];
     $pointData[]=$tmpDat;
