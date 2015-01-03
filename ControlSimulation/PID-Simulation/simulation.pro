@@ -3,14 +3,16 @@ LANGUAGE        = C++
 
 QT -= gui
 QT += xml network
-CONFIG  += qt warn_on release
+CONFIG  += qt warn_on debug
 DEFINES += x86
 
-HEADERS += ../../Vessel/src/pidControl.h
+HEADERS += ../../Vessel/src/pidControl.h \
+           ../../Vessel/src/logOutput.h
 
 
 SOURCES += main.cpp \
-           ../../Vessel/src/pidControl.cpp
+           ../../Vessel/src/pidControl.cpp \
+           ../../Vessel/src/logOutput.cpp
 
 unix{
   ARCH  = $$system("uname -m")
@@ -22,13 +24,6 @@ win32{
   ARCH     = $$(PROCESSOR_ARCHITECTURE)
   OPSYS    = $$(OS)
 }
-
-#RTIMU library elements...
-INCLUDEPATH += ../RTIMULib/RTIMULib
-LIBS += ../RTIMULib/RTIMULib/lib-$$OPSYS-$$ARCH/librtimu.a
-
-#Maestro servo controller support
-LIBS += -lusb-1.0
 
 DESTDIR     = bin-$$OPSYS-$$ARCH/
 UI_DIR      = .$$OPSYS-$$ARCH/ui

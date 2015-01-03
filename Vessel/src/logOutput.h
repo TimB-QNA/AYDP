@@ -31,6 +31,7 @@ class logOutput : public QThread
     void writeLogLine();
     
   private:
+    bool initialised;
     FILE *logFile;
     QTimer *logTimer;
     QString logFileName;

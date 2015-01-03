@@ -5,12 +5,22 @@
 
 pidControl::pidControl(QThread *parent) : QThread(parent)
 {
-  calcDerivative=true; dedt = new float; signal = new float;
+  // By default we calculate the derivative value.
+  // Alternatively it can be passed to the routine for greater accuracy
+  // Heading-rate taken from a gyro, for example will be better than the derivative of two headings.
+  calcDerivative=true;
+  // Create required pointers in case the user doesn't specify them.
+  dedt = new float;
+  signal = new float;
+  log = new logOutput;
+  
   kP=1; kI=0; kD=0; // defaults are a bit arbitrary but acceptable for heading control
   intLimit=0.5;
   channel=0;
-  iterTime=50;
+  iterTime=50e-3;
   setObjectName("pidControl");
+  
+  error=0;
 }
 
 void pidControl::readSettings(QDomNode root){
@@ -85,7 +95,7 @@ void pidControl::setIntegralLimit(float iLim){
     
 void pidControl::run(){
   loopTimer = new QTimer();
-  loopTimer->setInterval(iterTime);
+  loopTimer->setInterval(iterTime*1000);
   connect(loopTimer, SIGNAL(timeout()), this, SLOT(controlFunction()));
   log->initLogFile();
   loopTimer->start();
@@ -94,18 +104,17 @@ void pidControl::run(){
 
 void pidControl::controlFunction(){
   float oldError=error;
-  float dt=(float)loopTimer->interval()/1000.;
+  float dt=iterTime;
 
   error=(*signal)-target;
   intErrDt+=error*dt;
   if (fabs(error)>intLimit) intErrDt=0;
   if (calcDerivative) *dedt=(error-oldError)/dt;
-    
   controlValue=error*kP + intErrDt*kI + (*dedt)*kD;
   emit control(channel, controlValue);
   log->writeLogLine();
 }
 
-double control(){
+double pidControl::control(){
   return controlValue;
 }

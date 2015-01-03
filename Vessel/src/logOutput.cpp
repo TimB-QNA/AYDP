@@ -4,6 +4,7 @@
   
 logOutput::logOutput(QThread *parent) : QThread(parent)
 {
+  initialised=false;
 }
 
 void logOutput::setFileName(QString fname){
@@ -36,10 +37,13 @@ void logOutput::initLogFile(){
   for (i=0;i<fltHeader.count();i++) fprintf(logFile,"\t%s",fltHeader[i].toAscii().data());
   for (i=0;i<dblHeader.count();i++) fprintf(logFile,"\t%s",dblHeader[i].toAscii().data());    
   fprintf(logFile,"\n");
+  initialised=true;
 }
 
 void logOutput::writeLogLine(){
   int i;
+  if (!initialised) return;
+  
   QDateTime now=QDateTime::currentDateTimeUtc();
   fprintf(logFile,"%s\t%lli",now.toString("ddMMyy-hhmmss.zzz").toAscii().data(), now.toMSecsSinceEpoch());
   for (i=0;i<boolean.count();i++){

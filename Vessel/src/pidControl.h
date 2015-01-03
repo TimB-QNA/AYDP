@@ -24,12 +24,13 @@ class pidControl : public QThread
     
   public slots:
     void setTarget(float t);
+    void controlFunction();
   
   private:
     logOutput *log;
     bool calcDerivative;
     int channel;
-    int iterTime;
+    float iterTime;
     float intLimit; // Integral term limit. Integral term is ignored for any (absolute) error greater than this value.
     
     float intErrDt; // Integral of error over time
@@ -41,9 +42,6 @@ class pidControl : public QThread
     QTimer *loopTimer;
     
     void run();
-    
-  private slots:
-    void controlFunction();
     
   signals:
     void control(int channel, float controlValue);
