@@ -92,7 +92,7 @@ void pidControl::setDerivative(float *der){
 void pidControl::setIntegralLimit(float iLim){
   intLimit=iLim;
 }
-    
+
 void pidControl::run(){
   loopTimer = new QTimer();
   loopTimer->setInterval(iterTime*1000);

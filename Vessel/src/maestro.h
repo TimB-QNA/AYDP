@@ -18,10 +18,14 @@ class maestro : public QObject
     void orderPosition(int servo, float position);
     void listDevices();
     void grabDevice(QString serialNo="00009132");
-
     int channels();
+    void setSpeed(int srv, double value);
+    void setAcceleration(int srv, unsigned char value);
 
   private:
+    int REQUEST_SET_SERVO_VARIABLE;
+    int REQUEST_SET_TARGET;
+    
     int nChans;
     libusb_context *ctx;
     libusb_device **devList;

@@ -26,7 +26,7 @@ class commsLink : public QObject
     
   private slots:
     void connection();
-    void sendData();
+    void sendVesselData();
 };
 
 #endif

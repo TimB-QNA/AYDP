@@ -10,6 +10,9 @@ maestro::maestro(QObject *parent) : QObject(parent){
     return;
   }
 
+  REQUEST_SET_SERVO_VARIABLE = 0x84;
+  REQUEST_SET_TARGET = 0x85;
+    
 //    Level 0: no messages ever printed by the library (default)
 //    Level 1: error messages are printed to stderr
 //    Level 2: warning and error messages are printed to stderr
@@ -26,9 +29,33 @@ void maestro::orderPosition(int srv, float position){
   if (value<4000 && value!=0) value=4000;
   if (value>8000) value=8000;
 
-  libusb_control_transfer(devHandle, 0x40, 0x85, value, srv, string, sizeof(string),0);
-  // libusb_close(devHandle);
-  // libusb_exit(ctx);
+  libusb_control_transfer(devHandle, 0x40, REQUEST_SET_TARGET, value, srv, string, sizeof(string),0);
+}
+
+/*!
+ * Sets motion speed to the value given in engineering units (e.g. deg/s or mm/s)
+ */
+void maestro::setSpeed(int srv, double value){
+  if (srv<0 || srv>(int)channel.size()-1) return;  
+  double calRate=value*channel[srv].coefficient[1]/4000.;
+  unsigned short int result=(int)fabs(calRate*0.25/10.+0.5);
+  unsigned char string[256];
+//  printf("OpenPilot::maestro - Handling %i, %lf\n", srv, position);
+
+  libusb_control_transfer(devHandle, 0x40, REQUEST_SET_SERVO_VARIABLE, result, srv, string, sizeof(string),0);
+}        
+
+/*!
+ * "value" is between 0 and 255. 0 means that no acceleration limit is applied.
+ * In units of (0.25 μs)/(10 ms)/(80 ms). For autopilot purposes, just change
+ * this setting until you get suitably smooth motion.
+ */
+void maestro::setAcceleration(int srv, unsigned char value){
+  unsigned char string[256];
+
+  if (srv<0 || srv>(int)channel.size()-1) return;
+
+  libusb_control_transfer(devHandle, 0x40, REQUEST_SET_SERVO_VARIABLE, value | 0x80, srv, string, sizeof(string),0);
 }
 
 void maestro::listDevices(){

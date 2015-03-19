@@ -5,10 +5,19 @@
 logOutput::logOutput(QThread *parent) : QThread(parent)
 {
   initialised=false;
+  userTimebase=false;
 }
 
 void logOutput::setFileName(QString fname){
   logFileName=fname;
+}
+
+void logOutput::setUserTimeBase(bool enable){
+  userTimebase=enable;
+}
+
+void logOutput::setUserTime(float seconds){
+  userTime=seconds;
 }
 
 void logOutput::readSettings(QDomNode root){
@@ -44,8 +53,12 @@ void logOutput::writeLogLine(){
   int i;
   if (!initialised) return;
   
-  QDateTime now=QDateTime::currentDateTimeUtc();
-  fprintf(logFile,"%s\t%lli",now.toString("ddMMyy-hhmmss.zzz").toAscii().data(), now.toMSecsSinceEpoch());
+  if (!userTimebase){
+    QDateTime now=QDateTime::currentDateTimeUtc();
+    fprintf(logFile,"%s\t%lli",now.toString("ddMMyy-hhmmss.zzz").toAscii().data(), now.toMSecsSinceEpoch());
+  }else{
+    fprintf(logFile,"010170-000000.001\t%lli", (int)(userTime*1000.));
+  }
   for (i=0;i<boolean.count();i++){
     if (*boolean[i]==true){
       fprintf(logFile,"\t1");

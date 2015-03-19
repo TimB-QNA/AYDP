@@ -17,6 +17,8 @@ class logOutput : public QThread
     logOutput(QThread *parent=0);
     void readSettings(QDomNode root);
     void setFileName(QString fname);
+    void setUserTimeBase(bool enable);
+    void setUserTime(float seconds);
     void initLogFile();
     QStringList boolHeader;
     QList<bool*> boolean;
@@ -32,9 +34,11 @@ class logOutput : public QThread
     
   private:
     bool initialised;
+    bool userTimebase;
     FILE *logFile;
     QTimer *logTimer;
     QString logFileName;
+    float userTime;
     void run();
 };
 

@@ -60,7 +60,7 @@ set ylabel "Degrees"
 plot headAPLog u ($2-t0)/1000:5 w l t "Signal", \
             '' u ($2-t0)/1000:6 w l t "Target"
 
-set yrange [-45:45]
+# set yrange [-45:45]
 plot headAPLog u ($2-t0)/1000:8 w l t "Control"
 set yrange [*:*]
 
