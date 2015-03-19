@@ -6,9 +6,9 @@ commsLink::commsLink(QObject *parent, dataStore *vData) : QObject(parent)
 {
   vesselData=vData;
   port=6321;
-  printf("Integer byte width: %i\n",sizeof(int));
-  printf("  Float byte width: %i\n",sizeof(float));
-  printf(" Double byte width: %i\n",sizeof(double));
+  printf("Integer byte width: %li\n",sizeof(int));
+  printf("  Float byte width: %li\n",sizeof(float));
+  printf(" Double byte width: %li\n",sizeof(double));
 }
 
 void commsLink::readSettings(QDomNode root){
@@ -25,7 +25,7 @@ void commsLink::startServer(){
   
   dataTimer = new QTimer();
   dataTimer->setInterval(500);
-  connect(dataTimer, SIGNAL(timeout()), this, SLOT(sendData()));
+  connect(dataTimer, SIGNAL(timeout()), this, SLOT(sendVesselData()));
 }
 
 void commsLink::connection(){
@@ -37,7 +37,7 @@ void commsLink::connection(){
  * Raspberry PI is supported in this function by use of the __arm__ pre-processor definition. This
  * could cause issues with other arm processors.
  */
-void commsLink::sendData(){
+void commsLink::sendVesselData(){
   int i, nBytes;
   char buff[4096];
   QByteArray message, vData;
@@ -54,7 +54,7 @@ void commsLink::sendData(){
   sysMicros=sysTime.tv_usec;
 #endif
   system("clear");
-  printf("Size of vesselData = %i\n", sizeof(*vesselData));
+  printf("Size of vesselData = %li\n", sizeof(*vesselData));
   
   message.append(0xFF);  
   message.append(17);
@@ -70,7 +70,7 @@ void commsLink::sendData(){
 #else
   memcpy(buff,&sysTime,sizeof(sysTime)); message.append(buff,sizeof(sysTime));
 #endif  
-  printf("Size of sysTime = %i\n",sizeof(sysTime));
+  printf("Size of sysTime = %li\n",sizeof(sysTime));
   message.append(vData);
   message.append(checksum(message));
   
