@@ -15,4 +15,4 @@ pdf: clean $(docName).tex
 	    done
 
 clean:
-	@rm -f *.ps *.dvi *.aux *.toc *.idx *.ind *.ilg *.log *.out *.brf *.blg *.bbl $(docName).pdf
+	@rm -f *.ps *.dvi *.aux *.toc *.idx *.ind *.ilg *.log *.out *.brf *.blg *.bbl $(docName).pdf Figures/*.pdf

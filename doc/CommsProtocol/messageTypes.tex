@@ -1,0 +1,103 @@
+\chapter{Message Types}
+The AYDP protocol supports a number of message types, given below.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ c c c }
+  Message Type & Purpose & Link\\
+               &         &              \\
+\hline
+   0 & Time sync                & \ref{msg000} \\
+   1 & Wind speed and direction & \ref{msg001} \\
+   2 & Environmental conditions & \ref{msg002} \\
+   3 & Position                 & \ref{msg003} \\
+   4 & Position fix quality     & \ref{msg004} \\
+   5 & Position fix detail      & \ref{msg005} \\
+   6 & Vessel Data              & \ref{msg006} \\
+  \end{tabular}
+  \caption{Message Types}
+  \label{table:msg:types}
+\end{table}
+
+\section{Time synchronisation}
+\label{msg000}
+Time Sync
+
+\section{Wind speed and direction}
+\label{msg001}
+Time Sync
+
+\section{Environmental conditions}
+\label{msg002}
+Time Sync
+
+\section{Position}
+\label{msg003}
+Position
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ c c c }
+  Byte & Description & Type \\
+              &      &              \\
+\hline
+   0-3  & Latitude  & uint8  \\
+   4-7  & Longitude & uflt16 \\
+   8-11 & Altitude  & uflt16 \\
+  \end{tabular}
+  \caption{Position information}
+\end{table}
+
+\section{Position fix quality}
+\label{msg004}
+Fix Quality
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ c c c }
+  Byte & Description & Type \\
+              &      &              \\
+\hline
+    0  & Fix Type             & uint8  \\
+   1-2 & Mean DOP             & uflt16 \\
+   3-4 & Horizontal DOP       & uflt16 \\
+   5-6 & Vertical DOP         & uflt16 \\
+    7  & Number of satellites & uint8  \\
+  \end{tabular}
+  \caption{Position fix quality information}
+\end{table}
+
+\section{Position fix detail}
+\label{msg005}
+For the fix detail, bytes 1 to 7 are repeated for each Satellite. Thus a message for 10 satellites would be 71 bytes long. 
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ c c c }
+  Byte & Description & Type \\
+              &      &              \\
+\hline
+    0  & Number of satellites               & uint8  \\
+    1  & Satellite \#n ID                   & uint8  \\
+   2-3 & Satellite \#n Azimuth               & uflt16 \\
+   4-5 & Satellite \#n Elevation             & uflt16 \\
+   6-7 & Satellite \#n Signal to Noise ratio & uflt16 \\
+  \end{tabular}
+  \caption{Position fix detail from GPS}
+\end{table}
+
+\section{Vessel Data}
+\label{msg006}
+Time Sync
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ c c c }
+  Byte & Description & Type \\
+              &      &              \\
+\hline
+    0  & Number of satellites               & uint8  \\
+    1  & Satellite \#n ID                   & uint8  \\
+   2-3 & Satellite \#n Azimuth               & uflt16 \\
+   4-5 & Satellite \#n Elevation             & uflt16 \\
+   6-7 & Satellite \#n Signal to Noise ratio & uflt16 \\
+  \end{tabular}
+  \caption{Position fix detail from GPS}
+\end{table}

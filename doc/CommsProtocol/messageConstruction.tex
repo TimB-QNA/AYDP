@@ -26,4 +26,8 @@ The header is 27 bytes long and contains the message type and length as shown in
   \label{table:msg:header}
 \end{table}
 
-\input{section.tex} 
+For message types $\geq 127$ (i.e. where the MSB of the message type is high) the timing data is omitted. This is termed an expedited message, and the header becomes only six bytes long. This is used to transfer high-speed data where the transmission time is secondary to the data rate. Any message can be expidited, simply by adding 127 to the message identifier.
+
+\section{Transmission limitations}
+
+The expidited message form is useful for serial links, but it should be noted that ethernet and WiFi links will hit packet rate limits before the bandwidth limits, except in the case of extremely large messages, where expedited transfer will make little difference anyway.
