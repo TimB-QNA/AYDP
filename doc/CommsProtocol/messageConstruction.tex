@@ -1,5 +1,5 @@
 \chapter{Message Construction}
-An AYDP message is constructed from three basic components; a header, a data section, and a checksum. The checksum at the end of each sentence is a single byte which is the XOR of all of the bytes in the sentence (excluding itself). This checksum byte is only intended to allow the recipient to ensure that the message is complete, not to re-build any missing data.
+An AYDP message is constructed from three basic components; a header, a data section, and a checksum. The checksum at the end of each sentence is a single byte which is the XOR of all of the bytes in the sentence (excluding itself). This checksum byte is only intended to allow the recipient to ensure that the message is complete, not to re-build any missing data. All values are transmitted little-endian.
 
 \begin{figure}[H]
   \centering

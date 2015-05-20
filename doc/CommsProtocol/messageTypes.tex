@@ -5,7 +5,6 @@ The AYDP protocol supports a number of message types, given below.
   \centering
   \begin{tabular}{ c c c }
   Message Type & Purpose & Link\\
-               &         &              \\
 \hline
    0 & Time sync                & \ref{msg000} \\
    1 & Wind speed and direction & \ref{msg001} \\
@@ -13,7 +12,11 @@ The AYDP protocol supports a number of message types, given below.
    3 & Position                 & \ref{msg003} \\
    4 & Position fix quality     & \ref{msg004} \\
    5 & Position fix detail      & \ref{msg005} \\
-   6 & Vessel Data              & \ref{msg006} \\
+   6 & Vessel data              & \ref{msg006} \\
+   7 & Direct output control    & \ref{msg007} \\
+   8 & System value update      & \ref{msg008} \\
+   9 & System control message   & \ref{msg009} \\
+ 127 & Heartbeat                & \ref{msg127} \\
   \end{tabular}
   \caption{Message Types}
   \label{table:msg:types}
@@ -21,15 +24,15 @@ The AYDP protocol supports a number of message types, given below.
 
 \section{Time synchronisation}
 \label{msg000}
-Time Sync
+The time synchronisation message contains no data and is used to set the time on remote devices, by using the message time in the header. If this message is expidited, then it's meaning changes to that of a heartbeat see \ref{msg127}.
 
 \section{Wind speed and direction}
 \label{msg001}
-Time Sync
+TBD
 
 \section{Environmental conditions}
 \label{msg002}
-Time Sync
+TBD
 
 \section{Position}
 \label{msg003}
@@ -38,11 +41,10 @@ Position
   \centering
   \begin{tabular}{ c c c }
   Byte & Description & Type \\
-              &      &              \\
 \hline
-   0-3  & Latitude  & uint8  \\
-   4-7  & Longitude & uflt16 \\
-   8-11 & Altitude  & uflt16 \\
+   0-8  & Latitude  & flt64 \\
+   9-16  & Longitude & flt64 \\
+   17-21 & Altitude  & flt32 \\
   \end{tabular}
   \caption{Position information}
 \end{table}
@@ -54,7 +56,6 @@ Fix Quality
   \centering
   \begin{tabular}{ c c c }
   Byte & Description & Type \\
-              &      &              \\
 \hline
     0  & Fix Type             & uint8  \\
    1-2 & Mean DOP             & uflt16 \\
@@ -73,7 +74,6 @@ For the fix detail, bytes 1 to 7 are repeated for each Satellite. Thus a message
   \centering
   \begin{tabular}{ c c c }
   Byte & Description & Type \\
-              &      &              \\
 \hline
     0  & Number of satellites               & uint8  \\
     1  & Satellite \#n ID                   & uint8  \\
@@ -91,7 +91,6 @@ Time Sync
   \centering
   \begin{tabular}{ c c c }
   Byte & Description & Type \\
-              &      &              \\
 \hline
     0  & Number of satellites               & uint8  \\
     1  & Satellite \#n ID                   & uint8  \\
@@ -101,3 +100,80 @@ Time Sync
   \end{tabular}
   \caption{Position fix detail from GPS}
 \end{table}
+
+\section{Direct Output Control}
+\label{msg007}
+The ouput channels can be controlled directly, as long as direct control is enabled (table \ref{tab:svu:prescribed}). This is typically reserved for testing and calibration, or for controlling the platform as one might a radio controlled boat.
+
+The control system has a series of outputs, which may contain channels within them, consequently each address is made up of two integer values (device and channel) and a floating point value for the calibrated position. That is, to move a rudder +10 degrees on device 1, channel 2, the message content for that channel should read:
+\begin{verbatim}
+0x01 0x02 0x00 0x00 0x20 0x41
+\end{verbatim} 
+
+This message type supports setting an arbitrary number of channels, upto the addressable maximum (65,536) by specifying the device, channel and output data for each channel. If a channel is defined more than once, the last value is used as the active output.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ c c c }
+  Byte & Description & Type \\
+\hline
+    0  & Number of channels & uint16 \\
+    1  & Output device      & uint8 \\
+    2  & Output channel     & uint8 \\
+  3-7  & Calibrated output  & flt32 \\
+  \end{tabular}
+  \caption{Direct output}
+\end{table}
+
+\section{System Value Update}
+\label{msg008}
+The system value update message allows values within the software (such as control loop targets e.g. ordered heading or waypoints) to be changed on the fly. There are three modes in which a value may be updated, as specified in table \ref{tab:svu:updTypes}.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ c c }
+    Update type           & Value\\
+\hline
+    Single Value          & 1 \\
+    Entire Array          & 2 \\
+    Element Within Array  & 3 \\
+  \end{tabular}
+  \caption{Value update types}
+  \label{tab:svu:updTypes}
+\end{table}
+
+Each variable which can be changed must be registered at an address. This is typically hard-coded in the software, and therefore will vary dependant on the purpose of the software. The author of the software should give the address mapping for their code in their documentation. Some addresses are prescribed and are required for other messages in this protocol to provide the correct functionality. These are given in table \ref{tab:svu:prescribed}. 
+
+The address space is 16 bits wide, giving 65,536 possible addresses which can be edited. These addresses are not memory locations. They are in effect an array of pointers to other memory locations. This means that any address can contain any type of data, or an array of any type of data. The sending and recieving software must know what type of data is expected for each address, and therefore, type data is not included in the message. Only a single address can be updated in each message.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ c c c }
+  Byte & Description & Type \\
+\hline
+    0   & Update type & uint8 \\
+   1-2  & Address     & uint16 \\
+   3-6  & Array size or element & uint32 \\
+   7-   & Data & As required \\
+  \end{tabular}
+  \caption{System value update}
+\end{table}
+
+Where a single value is edited, the ``array size or element" entry is set to 0. If an entire array is being written, the array in this message over-writes the array in memory. This function must be used with caution, as changing array length may cause the software to crash. The programmer should guard against this possibility.
+
+When writing an array, the array size specifies the number of elements in the array, and the data entry is a contigious list of the array elements.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ c c c }
+  Address & Description & Type \\
+\hline
+  0x0000   & Enable direct control & uint8 (0/1) \\
+  \end{tabular}
+  \caption{Prescribed system addresses}
+  \label{tab:svu:prescribed}
+\end{table}
+
+\section{Heartbeat}
+\label{msg127}
+The heartbeat message is the expedited form of the time synchronisation message (\ref{msg000}). It serves to ensure that communication is still valid.
