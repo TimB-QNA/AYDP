@@ -1,0 +1,105 @@
+<?xml version="1.0"?>
+
+<PropertyList>
+
+ <generic>
+
+  <output>
+   <line_separator>newline</line_separator>
+   <var_separator>tab</var_separator>
+   <binary_mode>false</binary_mode>
+   
+   <chunk>
+     <node>/position/altitude-ft</node>
+     <name>Altitude MSL (m)</name>
+     <type>double</type>
+     <factor>0.3048</factor>
+     <format>%.6f</format>
+   </chunk>
+
+   <chunk>
+    <name>Longitude (deg)</name>
+    <type>double</type>
+    <node>/position/longitude-deg</node>
+    <format>%.12f</format>
+   </chunk>
+   
+   <chunk>
+    <name>Latitude (deg)</name>
+    <type>double</type>
+    <node>/position/latitude-deg</node>
+    <format>%.12f</format>
+   </chunk>
+ 
+   <chunk>
+    <name>pitch (deg)</name>
+    <type>double</type>
+    <node>/orientation/pitch-deg</node>
+    <format>%.6f</format>
+   </chunk>
+
+   <chunk>
+    <name>roll (deg)</name>
+    <type>double</type>
+    <node>/orientation/roll-deg</node>
+    <format>%.6f</format>
+   </chunk>
+
+   <chunk>
+    <name>head (deg)</name>
+    <type>double</type>
+    <node>/orientation/heading-deg</node>
+    <format>%.6f</format>
+   </chunk>
+   
+   <chunk>
+    <name>track (deg)</name>
+    <type>double</type>
+    <node>/orientation/track-deg</node>
+    <format>%.6f</format>
+   </chunk>
+   
+   <chunk>
+    <name>airspeed (m/s)</name>
+    <type>double</type>
+    <factor>0.514444</factor>
+    <node>/velocities/airspeed-kt</node>
+    <format>%.6f</format>
+   </chunk>
+
+  <chunk>
+    <name>groundspeed (m/s)</name>
+    <type>double</type>
+    <factor>0.514444</factor>
+    <node>/velocities/groundspeed-kt</node>
+    <format>%.6f</format>
+   </chunk>
+   
+  <chunk>
+    <name>outside air temperarure (degC)</name>
+    <type>double</type>
+    <node>/environment/temperature-degc</node>
+    <format>%.6f</format>
+   </chunk>
+   
+   <chunk>
+    <name>u Body Velocity (m/s)</name>
+    <type>double</type>
+    <node>/velocities/uBody-fps</node>
+    <format>%.6f</format>
+    <factor>0.3048</factor>
+   </chunk>
+   
+   <chunk>
+    <name>v Body Velocity (m/s)</name>
+    <type>double</type>
+    <node>/velocities/vBody-fps</node>
+    <format>%.6f</format>
+    <factor>0.3048</factor>
+   </chunk>
+   
+  </output>
+
+ </generic>
+
+</PropertyList>

@@ -1,0 +1,80 @@
+#!/usr/bin/gnuplot
+
+mainLogFile='AYDP_LogFile.csv'
+APList=system("ls *AP_LogFile.csv")
+
+xmin=5
+
+# Find minimum time by plotting to a terminal with
+# no output and then interrogating the result...
+stats mainLogFile using 2
+t0=STATS_min
+
+set grid
+
+set terminal postscript colour solid font 'helvetica' 8
+set output "AYDP_LogGraphs.ps"
+
+
+set xrange [xmin:]
+set xlabel "Time (s)"
+set multiplot layout 3,1 title "IMU data"
+
+plot mainLogFile u ($2-t0)/1000:5 w l t "Roll", \
+     '' u ($2-t0)/1000:6 w l t "Pitch"
+
+set ylabel "Heading (deg)"
+plot mainLogFile u ($2-t0)/1000:7 w l notitle
+
+unset ylabel
+plot mainLogFile u ($2-t0)/1000:8 w l t "Roll Rate", \
+     '' u ($2-t0)/1000:9 w l t "PitchRate", \
+     '' u ($2-t0)/1000:10 w l t "HeadingRate"
+unset multiplot
+
+
+set multiplot layout 3,2 title "GPS data"
+plot mainLogFile u ($2-t0)/1000:4 w l t "Satellites"
+set ylabel "Dilution of precision"
+plot mainLogFile u ($2-t0)/1000:18 w l t "Mean", \
+     '' u ($2-t0)/1000:19 w l t "Horizontal", \
+     '' u ($2-t0)/1000:20 w l t "Vertical"
+set ylabel "Track (deg)"
+plot mainLogFile u ($2-t0)/1000:11 w l t "Track"
+set ylabel "Speed (m/s)"
+plot mainLogFile u ($2-t0)/1000:12 w l t "Speed Over Ground"
+
+#set xrange [-1.183:-1.181]
+#set yrange [50.8315:50.832]
+set xlabel "Longitude"
+set ylabel "Latitude"
+plot mainLogFile u 17:16 w l t "Position"
+unset multiplot
+
+
+do for [APLog in APList] {
+set xrange [xmin:*]
+set yrange [*:*]
+set xlabel "Time (s)"
+
+set multiplot layout 4,2 columnsfirst title APLog
+set ylabel "Degrees"
+plot APLog u ($2-t0)/1000:5 w l t "Signal", \
+            '' u ($2-t0)/1000:6 w l t "Target"
+
+# set yrange [-45:45]
+plot APLog u ($2-t0)/1000:8 w l t "Control"
+set yrange [*:*]
+
+unset ylabel
+plot APLog u ($2-t0)/1000:7 w l title "Error"
+plot APLog u ($2-t0)/1000:9 w l title "Derivative"
+plot APLog u ($2-t0)/1000:10 w l title "Integral"
+
+set ylabel "Coefficient"
+plot APLog u ($2-t0)/1000:12 w l t "P"
+plot APLog u ($2-t0)/1000:13 w l t "I"
+plot APLog u ($2-t0)/1000:14 w l t "D"
+
+unset multiplot
+}

@@ -1,0 +1,7 @@
+Roll negative to port - Aileron negative to port
+
+Pitch positve nose up - Elevator negative pitch up
+
+Throttle -1 Full ahead
+
+Rudder positive to Stbd. 
