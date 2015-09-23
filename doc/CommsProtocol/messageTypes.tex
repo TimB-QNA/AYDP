@@ -16,7 +16,9 @@ The AYDP protocol supports a number of message types, given below.
    7 & Direct output control    & \ref{msg007} \\
    8 & System value update      & \ref{msg008} \\
    9 & System control message   & \ref{msg009} \\
- 127 & Heartbeat                & \ref{msg127} \\
+ 100 - 126 & User defined message & \ref{msg-user} \\ 
+ 128 & Heartbeat                & \ref{msg128} \\
+ 255 & Reserved                 & \ref{msg255} \\
   \end{tabular}
   \caption{Message Types}
   \label{table:msg:types}
@@ -174,6 +176,14 @@ When writing an array, the array size specifies the number of elements in the ar
   \label{tab:svu:prescribed}
 \end{table}
 
+\section{User defined messages}
+\label{msg-user}
+The message type range 100-126 is provided for user-defined messages. The message format should be cearly defined in the user's program documentation with reference to this protocol.
+
 \section{Heartbeat}
-\label{msg127}
+\label{msg128}
 The heartbeat message is the expedited form of the time synchronisation message (\ref{msg000}). It serves to ensure that communication is still valid.
+
+\section{Reserved Message}
+\label{msg255}
+The type 255 messages are provided to improve the error rejection properties of the protocol. If this message type is found, the first byte of the stream should be discarded, as the assumption is that the data stream has become a byte out of sync. This can happen in cases where the checksum of the previous message is 0xFF.

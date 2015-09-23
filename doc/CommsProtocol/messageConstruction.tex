@@ -26,8 +26,12 @@ The header is 27 bytes long and contains the message type and length as shown in
   \label{table:msg:header}
 \end{table}
 
-For message types $\geq 127$ (i.e. where the MSB of the message type is high) the timing data is omitted. This is termed an expedited message, and the header becomes only six bytes long. This is used to transfer high-speed data where the transmission time is secondary to the data rate. Any message can be expidited, simply by adding 127 to the message identifier.
+For message types $\geq 128$ (i.e. where the MSB of the message type is high) the timing data is omitted. This is termed an expedited message, and the header becomes only six bytes long. This is used to transfer high-speed data where the transmission time is secondary to the data rate. Any message can be expidited, simply by adding 128 to the message identifier.
 
 \section{Transmission limitations}
 
 The expidited message form is useful for serial links, but it should be noted that ethernet and WiFi links will hit packet rate limits before the bandwidth limits, except in the case of extremely large messages, where expedited transfer will make little difference anyway.
+
+\section{Protocol Robustness}
+
+The protocol robustness against random data is provided by a defined start byte (0xFF), the message type (which cannot be 0xFF), and a checksum. Occasionally, it is possible to improve the robustness beyond these measures by checking the message length for known-length messages. This reduces the ease of updating the message format or data content, but will improve the error rejection to random noise.
