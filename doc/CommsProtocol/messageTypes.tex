@@ -144,7 +144,7 @@ The system value update message allows values within the software (such as contr
   \label{tab:svu:updTypes}
 \end{table}
 
-Each variable which can be changed must be registered at an address. This is typically hard-coded in the software, and therefore will vary dependant on the purpose of the software. The author of the software should give the address mapping for their code in their documentation. Some addresses are prescribed and are required for other messages in this protocol to provide the correct functionality. These are given in table \ref{tab:svu:prescribed}. 
+Each variable which can be changed must be registered at an address. This is typically hard-coded in the software, and therefore will vary dependant on the purpose of the software. The author of the software should give the address mapping for their code in their documentation. Some addresses are prescribed and are required for other messages in this protocol to provide the correct functionality. These are given in table \ref{tab:svu:prescribed}.
 
 The address space is 16 bits wide, giving 65,536 possible addresses which can be edited. These addresses are not memory locations. They are in effect an array of pointers to other memory locations. This means that any address can contain any type of data, or an array of any type of data. The sending and recieving software must know what type of data is expected for each address, and therefore, type data is not included in the message. Only a single address can be updated in each message.
 
@@ -175,6 +175,58 @@ When writing an array, the array size specifies the number of elements in the ar
   \caption{Prescribed system addresses}
   \label{tab:svu:prescribed}
 \end{table}
+
+For example, to enable direct control the following bytes would be sent:
+\begin{verbatim}
+0xFF 0x88 0x00 0x00 0x00 0x02 0x00 0x01 CS
+\end{verbatim}
+
+\section{System Control Message}
+\label{msg009}
+
+The system control message allows the user to control the operation of the remote system, and request data. In some cases, such as with half-duplex communication, this may be preferable to a simple broadcast policy using system value update (\ref{msg008}). The command message consists of a single byte indicating the command, then further bytes specifying the arguments to that command.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ c c c }
+    Command              & Value & Reference \\
+\hline
+    Request data          & 1 & \ref{scm:rqd} \\
+    Store configuration in non-volatile storage  & 2 & \ref{scm:scd}\\
+  \end{tabular}
+  \caption{System Control Message Commands}
+  \label{tab:scm:commands}
+\end{table}
+
+For example, to request the data at address 8, the following bytes would be sent:
+\begin{verbatim}
+0xFF 0x89 0x00 0x00 0x00 0x02 0x01 0x08 CS
+\end{verbatim}
+
+While to save the configuration data, the following bytes would be sent:
+\begin{verbatim}
+0xFF 0x89 0x00 0x00 0x00 0x01 0x02 CS
+\end{verbatim}
+
+\subsection{Request Data}
+\label{scm:rqd}
+
+\begin{itemize}
+\item Parameters
+\subitem Address
+\end{itemize}
+
+This command allows the user to request data stored at a particular address. The system responds to this command with a system value update (\ref{msg008}) message. The svu message contains the required data, but does not give type information. If an address references an array, the whole array is returned.
+
+\subsection{Store configuration in non-volatile storage}
+\label{scm:scd}
+
+\begin{itemize}
+\item Parameters
+\subitem None
+\end{itemize}
+
+This command enables calibration or other configuration data to persist across system restarts. Typically, the remote system will store data in EEProm on microcontrollers or store to disk on larger systems. Issuing this command will save the current value of all non-volatile settings.
 
 \section{User defined messages}
 \label{msg-user}
