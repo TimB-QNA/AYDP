@@ -1,0 +1,6 @@
+Example of how to use a PID control loop
+outside of the autopilot system for simulation
+purposes. No effort has been spent on the response
+modelling; it is only an example!
+
+Press a key to close the plot
